@@ -8,39 +8,39 @@ instead.
 
 
 Syntax:
-	debasic MODE INPUT
+	debasic MODE INPUTFILE
 Output is written to stdout.
 
 
 Possible modes:
 
-"asis"
+--list
 	Only convert from binary to text, just as LIST does.
 
-"spaced"
+--spaced
 	Insert spaces.
 
-"indent"
+--indent
 	Insert spaces and output each statement on a separate line.
 	Blocks are indicated via indentation.
 
-"ref"
-	As "indent", but line numbers are shown with reference counts.
+--ref
+	As "--indent", but line numbers are shown with reference counts.
 	Un-referenced line numbers are suppressed.
 
-"mb"
-	As "ref", but also perform some substitutions:
+--std
+	As "--ref", but also perform some substitutions:
 		Array accesses are converted from () to [].
 		"<>" and "><" are converted to "!=".
 		"=" comparisons are converted to "==".
 		Superfluous spaces, colons and LET are suppressed.
 
-"py"
-	As "mb", but makes the output look a bit more like Python code.
+--python
+	As "--std", but makes the output look a bit more like Python code.
 	Some special characters are replaced with uppercase letters:
 		"get#3,a$,b%" becomes "get H3, aS, bX"
 
-"c"
-	As "mb", but makes the output look a bit more like C code.
+--c
+	As "--std", but makes the output look a bit more like C code.
 	Some special characters are replaced with uppercase letters:
 		"get#3,a$,b%" becomes "get(H3, aS, bX);"

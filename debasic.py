@@ -123,9 +123,9 @@ class Source(object):
     def __init__(self, fd):
         self.body = fd.read(65536)
         if len(self.body) < 4:
-            raise Exception("file is too short to be a valid basic program")
+            raise Exception("File is too short to be a valid basic program.")
         if len(self.body) >= 65536:
-            raise Exception("file is too long for a cbm basic program")
+            raise Exception("File is too long for a cbm basic program.")
         self.load_address = self.body[0] + 256 * self.body[1]
         print("File created by debasic version " + VERSION + " (" + LAST_CHANGE + ")")
         print("Load address is 0x%04x (%u).\n" % (self.load_address, self.load_address))
@@ -194,7 +194,7 @@ SPACING_NORMAL      = 5 # characters like var names and "("
 SPACING_OTHER       = 6 # _after_ tokens
 
 
-class CoderAsis(object):
+class CoderList(object):
     """The simplest output encoder is the base class for all others."""
 
     def __init__(self):
@@ -293,7 +293,7 @@ class CoderAsis(object):
             self.extras_in_line = 0
 
 
-class CoderSpacing(CoderAsis):
+class CoderSpacing(CoderList):
     """This class adds some spaces to improve readability."""
 
     def __init__(self):
@@ -359,7 +359,7 @@ class CoderRef(CoderIndent):
         self.indent_change_in_next_line = 0
 
 
-class CoderMB(CoderRef):
+class CoderStd(CoderRef):
     """This class adds transformations to ==, !=, []."""
 
     def __init__(self):
@@ -392,7 +392,7 @@ class CoderMB(CoderRef):
         out(string)
 
 
-class CoderPy(CoderMB):
+class CoderPython(CoderStd):
     """This class outputs the program in a Python-like fashion."""
 
     def __init__(self):
@@ -441,7 +441,7 @@ class CoderPy(CoderMB):
         out('"')
 
 
-class CoderC(CoderMB):
+class CoderC(CoderStd):
     """This class outputs the program in a C-like fashion."""
 
     def __init__(self):
@@ -647,7 +647,7 @@ class Parser(object):
         """Do end-of-statement checks because of separator."""
         # unmatched parentheses?
         if self.statement_parentheses[-1] != None:
-            out("ERROR, statement has non-closed parentheses!\n")
+            out("ERROR, statement has non-closed parenthesis.\n")
         self.coder.statement_separator(sep)
 
     def process_token(self, token):
@@ -702,7 +702,7 @@ class Parser(object):
                     token = tok2    # from here on, use extended token
                 else:
                     self.source.peek_reset()
-                    print("Found token 0x%02x 0x00, this should not happen!\n" % token, file=sys.stderr)
+                    print("Found token 0x%02x 0x00, this should not happen.\n" % token, file=sys.stderr)
         # do we need to care about that awful special syntax for DOS commands?
         self.DOS_flag = DOS_command_with_awful_syntax(token)
         # do we need to start collecting line number digits? (for THEN/ELSE, see end of method)
@@ -713,7 +713,7 @@ class Parser(object):
             if self.coder.reason_for_indent() == block_starter[token]:
                 self.coder.change_indent(-1, None)
             else:
-                out("CAUTION, the next statement would end a block, but not the one that is open!\n")
+                out("CAUTION, the next statement would end a block, but not the one that is open.\n")
         elif token == TOKEN_BEND:
             self.coder.change_next_line_indent(-1)
         # check spacing around token
@@ -882,7 +882,7 @@ class Parser(object):
                                     self.next_equals_assigns = True # the next non-space should be the correct '='!
                             else:
                                 self.coder.raw(self.petscii[byte])
-                                out("ERROR, statement closes non-opened parenthesis!\n")
+                                out("ERROR, statement closes non-opened parenthesis.\n")
                         else:
                             self.coder.raw(self.petscii[byte])
                         # ignore spaces, '%' and '$' when remembering char before '(':
@@ -905,8 +905,29 @@ class Parser(object):
         self.coder.extra_byte(byte)
 
 
-def process_binary(coderclass, source):
+def process_file(mode, inputfile):
     global  Pass
+
+    if mode == '--list':
+        coderclass = CoderList
+    elif mode == '--spaced':
+        coderclass = CoderSpacing
+    elif mode == '--indent':
+        coderclass = CoderIndent
+    elif mode == '--ref':
+        coderclass = CoderRef
+    elif mode == '--std':
+        coderclass = CoderStd
+    elif mode == '--python':
+        coderclass = CoderPython
+    elif mode == '--c':
+        coderclass = CoderC
+    else:
+        print("Error: Mode not recognized.", file = sys.stderr)
+        show_help_and_die()
+    with open(inputfile, "rb") as fd:
+        source = Source(fd)
+        fd.close()
 
     # TODO - insert machine type check:
     # if it's "auto", try to decide basic version by source.load_address:
@@ -925,7 +946,7 @@ def process_binary(coderclass, source):
     print("")
     # check "program did not end early" flag and tell user!
     if not parser.found_valid_end:
-        print("ERROR - basic program does not have a valid end marker.\n")
+        print("ERROR, basic program does not have a valid end marker.\n")
 
 
 def die(msg):
@@ -936,40 +957,21 @@ def die(msg):
 def show_help_and_die():
     print(
 "Syntax:\n" +
-sys.argv[0], "mode file\n"
-"mode must be asis, spaced, indent, ref, mb, py or c\n"
+sys.argv[0], "[MODE] INPUTFILE\n"
+"MODE must be one of --list, --spaced, --indent, --ref, --std, --python or --c.\n"
 "FIXME - show help\n",
         file = sys.stderr)
     sys.exit(1)
 
 
 def main():
-    if len(sys.argv) != 3:
-        print("Wrong number of arguments", file = sys.stderr)
-        show_help_and_die()
+    if len(sys.argv) == 2:
+        process_file("--std", sys.argv[1])
+    elif len(sys.argv) == 3:
+        process_file(sys.argv[1], sys.argv[2])
     else:
-        mode = sys.argv[1]
-        if mode == 'asis':
-            coder = CoderAsis
-        elif mode == 'spaced':
-            coder = CoderSpacing
-        elif mode == 'indent':
-            coder = CoderIndent
-        elif mode == 'ref':
-            coder = CoderRef
-        elif mode == 'mb':
-            coder = CoderMB
-        elif mode == 'py':
-            coder = CoderPy
-        elif mode == 'c':
-            coder = CoderC
-        else:
-            print("Mode must be asis/spaced/indent/ref/mb/py/c", file = sys.stderr)
-            show_help_and_die()
-        with open(sys.argv[2], "rb") as fd:
-            source = Source(fd)
-            fd.close()
-        process_binary(coder, source)
+        print("Error: Wrong number of arguments", file = sys.stderr)
+        show_help_and_die()
 
 
 if __name__ == '__main__':
