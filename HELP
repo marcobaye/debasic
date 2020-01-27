@@ -1,9 +1,10 @@
 
 "debasic" converts cbm basic programs to text while trying to make the
-output human-readable.
+output human-readable. It supports Basic V1.0, V2.0, V3.5 and V7.0 as
+input.
 
 If you want to be able to convert the output back to a working basic
-program, then do not use this program. Use petcat from the VICE project
+program, then do not use this program, use petcat from the VICE project
 instead.
 
 
