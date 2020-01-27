@@ -8,7 +8,7 @@ instead.
 
 
 Syntax:
-	debasic MODE INPUTFILE
+	debasic [MODE] INPUTFILE
 Output is written to stdout.
 
 
@@ -34,13 +34,16 @@ Possible modes:
 		"<>" and "><" are converted to "!=".
 		"=" comparisons are converted to "==".
 		Superfluous spaces, colons and LET are suppressed.
+	This is the default mode.
 
 --python
-	As "--std", but makes the output look a bit more like Python code.
+	As "--std", but makes the output look a bit more like Python code:
+		"REM" becomes "#", "THEN" becomes ":", etc.
 	Some special characters are replaced with uppercase letters:
-		"get#3,a$,b%" becomes "get H3, aS, bX"
+		"#3,a$,b%" becomes "H3, aS, bX"
 
 --c
-	As "--std", but makes the output look a bit more like C code.
+	As "--std", but makes the output look a bit more like C code:
+		"REM" becomes "//", "THEN" becomes "{", etc.
 	Some special characters are replaced with uppercase letters:
-		"get#3,a$,b%" becomes "get(H3, aS, bX);"
+		"#3,a$,b%" becomes "H3, aS, bX"
