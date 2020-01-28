@@ -7,7 +7,11 @@ closing '}' after a THEN block appear in the _following_ BASIC line.
 warnings about block ender tokens not matching the block starter appear even
 in modes without indentation.
 
-the "asis" mode complains about NEXTs because they do not match the "indentation"
+the "--list" mode complains about NEXTs because they do not match the "indentation"
+
+the "--list" mode removes spaces from input
+
+allow NEXT to close several blocks, if there are given more vars
 
 
 TODOs:
@@ -18,6 +22,12 @@ change GOTO <nothing> to GOTO 0
 
 change "." numbers to "0"
 
-allow NEXT to close several blocks, if there are given more vars
-
 actually _check_ var names given after NEXT
+
+how tf can I indent something like this?
+	if a then print 1:if b then print 2:else print 3
+	a b	output
+	0 0	3
+	0 1	3
+	1 0	13
+	1 1	12

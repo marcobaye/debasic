@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 """This module provides stuff concerning the BASIC language found in 8-bit
 machines made by Commodore Business Machines."""
 
