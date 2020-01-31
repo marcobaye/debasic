@@ -546,6 +546,7 @@ class CoderC(CoderStd):
             # all 0xceXY are functions, so do not add "("
             string = sanitized(string)
         else:
+            # FIXME - make sure fused tokens like <= and >= are not processed here!
             string = sanitized(string) + "("
         self.check_indentation(token in [TOKEN_NEXT, TOKEN_ELSE, TOKEN_LOOP])
         out(string)
