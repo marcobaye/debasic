@@ -122,12 +122,9 @@ class Source(object):
     """This class holds the original basic program"""
 
     def __init__(self, fd):
-        self.body = fd.read(65536)
-        if len(self.body) < 4:
-            raise Exception("File is too short to be a valid basic program.")
-        if len(self.body) >= 65536:
-            raise Exception("File is too long for a cbm basic program.")
-        self.load_address = self.body[0] + 256 * self.body[1]
+        self.program = cbmbasic.Program(fd)
+        self.load_address = self.program.load_address
+        self.body = self.program.body
         print("File created by debasic version " + VERSION + " (" + LAST_CHANGE + ")")
         print("Load address is 0x%04x (%u).\n" % (self.load_address, self.load_address))
 

@@ -4,6 +4,7 @@ machines made by Commodore Business Machines."""
 
 class Basic(object):
     """This class holds info about Commodore Basic."""
+
     def __init__(self, basic_version = 7, machine = 128):
         """Valid basic versions are 1, 2, 3.5 and 7.\nValid machines are 64, 264, 128."""
         if basic_version not in [1, 2, 3.5, 7]:
@@ -69,8 +70,9 @@ class Basic(object):
 "{cbm u}",          "{cbm o}",          "{shift @}",    "{cbm f}",
 "{cbm c}",          "{cbm x}",          "{cbm v}",      "{pi}"
 ]
+
     def get_petscii_table(self):
-        """This method returns a petscii table for the chosen machine."""
+        """Return petscii table for the chosen machine."""
         if self.machine == 64:
             return self.petscii64
         elif self.machine == 264:
@@ -117,8 +119,9 @@ class Basic(object):
             return petscii128
         else:
             raise Exception("Invalid machine!")
+
     def get_token_dict(self):
-        """This returns a token dictionary for the chosen basic version."""
+        """Return a token dictionary for the chosen basic version."""
         # whether trailing space is actually output depends on next byte!
         strings = [
 # basic 1:
@@ -223,6 +226,18 @@ class Basic(object):
             #tokens[string] = index + first_token
             tokens[index + first_token] = string
         return tokens
+
+
+class Program(object):
+    """Class to represent a program"""
+
+    def __init__(self, fd):
+        """Read program from file."""
+        self.body = fd.read(65536)
+        assert len(self.body) >= 4, "File is too short to be a valid basic program."
+        assert len(self.body) < 65536, "File is too long to be a cbm basic program."
+        self.load_address = self.body[0] + 256 * self.body[1]
+        # TODO - now scan and put into "lines" list and optional ml postfix
 
 #if __name__ == "__main__":
 #    main()
