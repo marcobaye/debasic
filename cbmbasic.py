@@ -198,7 +198,10 @@ class Basic(object):
         "{0xce 0x01}",  "pot",      "bump",
 "pen",  # basic 10 calls this LPEN?
         "rsppos",       "rsprite",  "rspcolor",
-"xor",  "rwindow",      "pointer"
+"xor",  "rwindow",      "pointer",
+# c65's basic 10:
+                                    "{0xce 0x0b}",  # no idea what this is
+"pixel",    "rpalette"
 ]):
             #tokens[string] = index + first_token
             tokens[index + first_token] = string
@@ -220,8 +223,20 @@ class Basic(object):
 # stash/fetch/swap are called "dma" in basic 10?
 "{0xfe 0x20}",  "fetch ",       "{0xfe 0x22}",  "swap ",
 # 0xfe 0x20 and 0xfe 0x22 are not used (0x20 is space, 0x22 is double quote)
-"off ",         "fast ",        "slow "
+"off ",         "fast ",        "slow ",
 # off is an "unimplemented command"
+# c65's basic 10:
+                                                "type ",
+"bverify ",     "ectory ",      "erase ",       "find ",
+"change ",      "set ",         "screen ",      "polygon ",
+"ellipse ",     "viewport ",    "gcopy ",       "pen ",
+"palette ",     "dmode ",       "dpat ",        "pic ",
+"genlock ",     "foreground ",  "{0xfe 0x3a}",  "background ",
+# 0xfe 0x3a is not used (0x3a is ':')
+"border ",      "highlight ",   "mouse ",       "rmouse ",
+"disk ",        "cursor ",      "{0xfe 0x42}",  "loadiff ",
+# 0xfe 0x42 is unknown...
+"saveiff ",     "edit "
 ]):
             #tokens[string] = index + first_token
             tokens[index + first_token] = string

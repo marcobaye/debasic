@@ -4,8 +4,8 @@ import sys
 import cbmbasic
 #import argparse
 
-VERSION = "16"
-LAST_CHANGE = "27 Jan 2020"
+VERSION = "17"
+LAST_CHANGE = "14 Jul 2020"
 
 # here are some token definitions. for the full lookup table see "cbmbasic.py"
 # "fused" and "artificial" tokens are used to facilitate renaming to Python/C later on
