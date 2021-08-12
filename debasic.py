@@ -4,8 +4,9 @@ import sys
 import cbmbasic
 #import argparse
 
-VERSION = "17"
-LAST_CHANGE = "14 Jul 2020"
+VERSION = "18"
+LAST_CHANGE = "13 Aug 2021"
+RENUMBER = False#True # FIXME, make a CLI option for this!
 
 # here are some token definitions. for the full lookup table see "cbmbasic.py"
 # "fused" and "artificial" tokens are used to facilitate renaming to Python/C later on
@@ -559,7 +560,7 @@ class CoderC(CoderStd):
 class Parser(object):
     """Parse a program a byte at a time."""
 
-    def __init__(self, coder, source, refs, basic_version = 7, machine = 128):
+    def __init__(self, coder, source, refs, renums, basic_version = 7, machine = 128):
         self.coder = coder
         self.source = source
         self.version = basic_version
@@ -568,6 +569,7 @@ class Parser(object):
         self.tokens = basic.get_token_dict()
         self.process = self.expect_link_low
         self.linerefs = refs
+        self.renums = renums
         self.line_number_reason = None  # valid reasons would be TOKEN_GOTO and friends
         self.line_number_string = ""    # string to collect line number digits
         self.found_valid_end = False
@@ -584,8 +586,6 @@ class Parser(object):
 
     def start_line_number_mode(self, token):
         """Enable scanning of line numbers after GOTO/GO_TO/GOSUB/THEN/ELSE/RESUME/TRAP/..."""
-        if Pass == 2:
-            return
         self.line_number_reason = token
         self.line_number_string = ""
 
@@ -595,6 +595,7 @@ class Parser(object):
 #EL         ? forget it. RENUMBER only fixes "EL=value" comparisons, but what about "l1=el:..."?
 #RENUMBER   no!
 #DELETE     no!
+        return_value = self.line_number_string
         # step1: GOTO, GO_TO and GOSUB default to zero if no number given, so add prefix:
         if self.line_number_reason in [TOKEN_GOTO, TOKEN_GO_TO, TOKEN_GOSUB]:
             self.line_number_string = "0" + self.line_number_string
@@ -603,22 +604,32 @@ class Parser(object):
             reftoken = short(self.tokens[TOKEN_GOTO])
         else:
             reftoken = short(self.tokens[self.line_number_reason])
-        # if string is not empty, note ref
+
+        # if string is not empty, handle it
         if self.line_number_string != "":
             number = int(self.line_number_string)
-            if number not in self.linerefs:
-                self.linerefs[number] = dict()
-            linedict = self.linerefs[number]
-            if reftoken in linedict:
-                linedict[reftoken] += 1
+            if Pass == 1:
+                # note ref
+                if number not in self.linerefs:
+                    self.linerefs[number] = dict()
+                linedict = self.linerefs[number]
+                if reftoken in linedict:
+                    linedict[reftoken] += 1
+                else:
+                    linedict[reftoken] = 1
             else:
-                linedict[reftoken] = 1
+                # renum?
+                if number in self.renums:
+                    return_value = str(self.renums[number])
+
         # ON<value>GOTO/GOSUB allows several comma-separated numbers:
         # (this algo accepts "ON<value>GO TO"; basic would not. but we're not here to do syntax checks)
         if self.start_of_statement == TOKEN_ON and nodigit == ord(","):
             self.line_number_string = ""    # keep accepting line numbers
         else:
             self.line_number_reason = None  # stop doing it
+
+        return return_value # either the real or the renumbered one
 
     def merge_comparisons(self, first_token):
         """Check next non-space. If it is a comparison, try to merge the
@@ -769,6 +780,9 @@ class Parser(object):
             refs = self.linerefs[line_number]
         else:
             refs = None
+        # renum?
+        if line_number in self.renums:
+            line_number = self.renums[line_number]
         self.coder.new_line(line_number, refs)
         self.quoted = False
         self.process = self.start_statement
@@ -797,9 +811,13 @@ class Parser(object):
         if self.line_number_reason != None:
             if byte >= ord("0") and byte <= ord("9"):
                 self.line_number_string = self.line_number_string + chr(byte)
+                self.coder.spacing(transition = SPACING_NORMAL)
+                self.statement_last_before_paren = byte
+                return  # do not output line number until complete
             else:
                 if byte != ord(" "):
-                    self.end_line_number_mode(byte)
+                    out = self.end_line_number_mode(byte)
+                    self.coder.raw(out) # output either real or renum'd one
         # first check for NUL...
         if byte == 0:
             # quotes still open at end of line? close, except in comments:
@@ -938,10 +956,19 @@ def process_file(mode, inputfile):
     version = 7 # for now, assume Basic 7.0
     machine = 128   # for now, assume C-128
     refs = dict()
+    renums = dict()
     for Pass in range(1, 3):
         coder = coderclass()
-        parser = Parser(coder, source, refs, version, machine)
+        parser = Parser(coder, source, refs, renums, version, machine)
         parser.parse()
+        # renum?
+        if refs and RENUMBER:
+            refdnums = [num for num in refs]
+            refdnums.sort()
+            new = 0
+            for num in refdnums:
+                renums[num] = new
+                new += 1
     print("")
     # check "program did not end early" flag and tell user!
     if not parser.found_valid_end:
